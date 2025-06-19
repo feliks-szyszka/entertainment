@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SWF Viewer</title>
+  <script src="https://cdn.tailwindcss.com"></script> 
+  <script src="https://unpkg.com/@ruffle-rs/ruffle"></script> 
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-center">SWF Viewer</h1>
+
+    <!-- File List -->
+    <div id="fileList" class="mb-6 space-y-2 text-center">
+      <p>Loading SWF files...</p>
+    </div>
+
+    <!-- SWF Viewer Container -->
+    <div id="swfContainer" class="aspect-video bg-black rounded shadow-lg overflow-hidden mx-auto"></div>
+  </div>
+
+  <script>
+    const GITHUB_REPO = "yourusername/yourrepo"; // Replace with your GitHub username/repo
+    const CONTENT_FOLDER = "content";
+    const API_URL = `https://api.github.com/repos/${GITHUB_REPO}/contents/${CONTENT_FOLDER}`; 
+    const FILE_LIST_CONTAINER = document.getElementById("fileList");
+    const SWF_CONTAINER = document.getElementById("swfContainer");
+
+    let rufflePlayer = null;
+
+    // Initialize Ruffle Player
+    function initRuffle() {
+      if (!window.RufflePlayer) {
+        alert("Ruffle failed to load.");
+        return;
+      }
+      const ruffle = window.RufflePlayer.newest();
+      rufflePlayer = ruffle.createPlayer();
+      SWF_CONTAINER.innerHTML = ""; // Clear previous player
+      SWF_CONTAINER.appendChild(rufflePlayer);
+    }
+
+    // Load SWF file into Ruffle
+    function loadSwf(filePath) {
+      if (!rufflePlayer) initRuffle();
+      const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/${encodeURIComponent(filePath)}`; 
+      rufflePlayer.load(rawUrl);
+    }
+
+    // Fetch SWF files from GitHub
+    async function fetchSwfFiles() {
+      try {
+        const res = await fetch(API_URL);
+        const files = await res.json();
+
+        const swfFiles = files
+          .filter(file => file.name.toLowerCase().endsWith(".swf"))
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        FILE_LIST_CONTAINER.innerHTML = "";
+
+        if (swfFiles.length === 0) {
+          FILE_LIST_CONTAINER.innerHTML = "<p>No SWF files found.</p>";
+          return;
+        }
+
+        const ul = document.createElement("div");
+        ul.className = "space-y-2";
+
+        swfFiles.forEach(file => {
+          const btn = document.createElement("button");
+          btn.textContent = file.name;
+          btn.className = "block w-full text-left px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded transition";
+          btn.onclick = () => loadSwf(file.path);
+          ul.appendChild(btn);
+        });
+
+        FILE_LIST_CONTAINER.appendChild(ul);
+
+        // Optionally auto-load first file
+        if (swfFiles.length > 0) {
+          loadSwf(swfFiles[0].path);
+        }
+
+      } catch (err) {
+        console.error(err);
+        FILE_LIST_CONTAINER.innerHTML = "<p>Error loading files.</p>";
+      }
+    }
+
+    fetchSwfFiles();
+  </script>
+</body>
+</html>
