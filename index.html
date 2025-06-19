@@ -22,8 +22,7 @@
 
   <script>
     const GITHUB_REPO = "feliks-szyszka/entertainment"; // Replace with your GitHub username/repo
-    const CONTENT_FOLDER = "content";
-    const API_URL = `https://api.github.com/repos/${GITHUB_REPO}/contents/${CONTENT_FOLDER}`; 
+    const API_URL = `https://api.github.com/repos/${GITHUB_REPO}/contents/`;  // Root directory
     const FILE_LIST_CONTAINER = document.getElementById("fileList");
     const SWF_CONTAINER = document.getElementById("swfContainer");
 
@@ -48,14 +47,14 @@
       rufflePlayer.load(rawUrl);
     }
 
-    // Fetch SWF files from GitHub
+    // Fetch SWF files from GitHub root
     async function fetchSwfFiles() {
       try {
         const res = await fetch(API_URL);
         const files = await res.json();
 
         const swfFiles = files
-          .filter(file => file.name.toLowerCase().endsWith(".swf"))
+          .filter(file => file.type === "file" && file.name.toLowerCase().endsWith(".swf"))
           .sort((a, b) => a.name.localeCompare(b.name));
 
         FILE_LIST_CONTAINER.innerHTML = "";
